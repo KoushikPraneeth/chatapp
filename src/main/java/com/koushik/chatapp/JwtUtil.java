@@ -23,6 +23,16 @@ public class JwtUtil {
     @Value("${jwt.expiration}")
     private Long expiration;
 
+    private final SecretKey key;
+
+    public JwtUtil(@Value("${jwt.secret}") String secret) {
+        if (secret.length() < 32) {
+            this.key = Keys.secretKeyFor(SignatureAlgorithm.HS256);
+        } else {
+            this.key = Keys.hmacShaKeyFor(secret.getBytes());
+        }
+    }
+
     public String extractUsername(String token) {
         return extractClaim(token, Claims::getSubject);
     }
@@ -37,7 +47,7 @@ public class JwtUtil {
     }
 
     private Claims extractAllClaims(String token) {
-        return Jwts.parser().setSigningKey(secret.getBytes()).build().parseClaimsJws(token).getBody();
+        return Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(token).getBody();
     }
 
     private Boolean isTokenExpired(String token) {
@@ -50,8 +60,6 @@ public class JwtUtil {
     }
 
     private String createToken(Map<String, Object> claims, String subject) {
-        SecretKey key = Keys.hmacShaKeyFor(secret.getBytes());
-
         return Jwts.builder()
                 .setClaims(claims)
                 .setSubject(subject)
