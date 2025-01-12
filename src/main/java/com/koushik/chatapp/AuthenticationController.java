@@ -23,20 +23,22 @@ public class AuthenticationController {
     private UserService userService;
 
     @PostMapping("/authenticate")
-    public ResponseEntity<?> createAuthenticationToken(@RequestBody AuthenticationRequest authenticationRequest) throws Exception {
-        try {
-            authenticationManager.authenticate(
-                    new UsernamePasswordAuthenticationToken(authenticationRequest.getUsername(), authenticationRequest.getPassword())
-            );
-        } catch (BadCredentialsException e) {
-            throw new Exception("Incorrect username or password", e);
-        }
-
-        final UserDetails userDetails = userService.loadUserByUsername(authenticationRequest.getUsername());
-        final String jwt = jwtUtil.generateToken(userDetails);
-
-        return ResponseEntity.ok(new AuthenticationResponse(jwt));
+public ResponseEntity<?> createAuthenticationToken(@RequestBody AuthenticationRequest authenticationRequest) throws Exception {
+    try {
+        authenticationManager.authenticate(
+                new UsernamePasswordAuthenticationToken(authenticationRequest.getUsername(), authenticationRequest.getPassword())
+        );
+    } catch (BadCredentialsException e) {
+        throw new Exception("Incorrect username or password", e);
     }
+
+    final UserDetails userDetails = userService.loadUserByUsername(authenticationRequest.getUsername());
+    final String jwt = jwtUtil.generateToken(userDetails);
+
+    System.out.println("Generated JWT: " + jwt); // Log the token
+
+    return ResponseEntity.ok(new AuthenticationResponse(jwt));
+}
 }
 
 class AuthenticationRequest {
