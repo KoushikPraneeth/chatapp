@@ -1,5 +1,3 @@
-package com.koushik.chatapp;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -13,20 +11,19 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
+import com.koushik.chatapp.JwtRequestFilter;
+
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
 
     @Autowired
-    private JwtUtil jwtUtil;
+    private JwtRequestFilter jwtRequestFilter;
 
     @Bean
-    public JwtRequestFilter jwtRequestFilter() throws Exception {
-        return new JwtRequestFilter();
-    }
-
-    @Bean
-    public AuthenticationManager authenticationManager(AuthenticationConfiguration authenticationConfiguration) throws Exception {
+    public AuthenticationManager authenticationManager(
+        AuthenticationConfiguration authenticationConfiguration
+    ) throws Exception {
         return authenticationConfiguration.getAuthenticationManager();
     }
 
@@ -38,14 +35,32 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-                .csrf(csrf -> csrf.disable())
-                .authorizeHttpRequests(authz -> authz
-                        .requestMatchers("/authenticate", "/users/register").permitAll() // Allow registration without authentication
-                        .anyRequest().authenticated()
+            .csrf(csrf -> csrf.disable())
+            .headers(headers ->
+                headers.contentSecurityPolicy(csp ->
+                    csp.policyDirectives("frame-ancestors 'self'")
                 )
-                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
+            )
+            .authorizeHttpRequests(authz ->
+                authz
+                    .requestMatchers(
+                        "/h2-console/**",
+                        "/authenticate",
+                        "/users/register",
+                        "/ws/**"
+                    )
+                    .permitAll()
+                    .anyRequest()
+                    .authenticated()
+            )
+            .sessionManagement(session ->
+                session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+            );
 
-        http.addFilterBefore(jwtRequestFilter(), UsernamePasswordAuthenticationFilter.class);
+        http.addFilterBefore(
+            jwtRequestFilter,
+            UsernamePasswordAuthenticationFilter.class
+        );
 
         return http.build();
     }

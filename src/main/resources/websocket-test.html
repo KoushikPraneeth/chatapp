@@ -1,0 +1,45 @@
+<!doctype html>
+<html>
+    <head>
+        <title>WebSocket Test</title>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.5.0/sockjs.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
+    </head>
+    <body>
+        <div id="messages"></div>
+        <input type="text" id="message" placeholder="Type a message..." />
+        <button onclick="sendMessage()">Send</button>
+
+        <script>
+            const socket = new SockJS("http://localhost:8080/ws");
+            const stompClient = Stomp.over(socket);
+
+            stompClient.connect({}, function (frame) {
+                console.log("Connected: " + frame);
+
+                stompClient.subscribe("/topic/public", function (message) {
+                    const messageElement = document.createElement("div");
+                    messageElement.textContent = JSON.parse(
+                        message.body,
+                    ).content;
+                    document
+                        .getElementById("messages")
+                        .appendChild(messageElement);
+                });
+            });
+
+            function sendMessage() {
+                const messageContent = document.getElementById("message").value;
+                stompClient.send(
+                    "/app/chat.public",
+                    {},
+                    JSON.stringify({
+                        sender: "testuser1",
+                        content: messageContent,
+                    }),
+                );
+                document.getElementById("message").value = "";
+            }
+        </script>
+    </body>
+</html>
