@@ -23,10 +23,7 @@ public class WebSocketAuthInterceptor implements ChannelInterceptor {
 
     @Override
     public Message<?> preSend(Message<?> message, MessageChannel channel) {
-        StompHeaderAccessor accessor = MessageHeaderAccessor.getAccessor(
-            message,
-            StompHeaderAccessor.class
-        );
+        StompHeaderAccessor accessor = MessageHeaderAccessor.getAccessor(message, StompHeaderAccessor.class);
 
         if (StompCommand.CONNECT.equals(accessor.getCommand())) {
             String authHeader = accessor.getFirstNativeHeader("Authorization");
@@ -34,23 +31,15 @@ public class WebSocketAuthInterceptor implements ChannelInterceptor {
                 String jwt = authHeader.substring(7);
                 String username = jwtUtil.extractUsername(jwt);
 
-                if (
-                    username != null &&
-                    SecurityContextHolder.getContext().getAuthentication() ==
-                    null
-                ) {
-                    UserDetails userDetails = userService.loadUserByUsername(
-                        username
-                    );
+                if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+                    UserDetails userDetails = userService.loadUserByUsername(username);
 
                     if (jwtUtil.validateToken(jwt, userDetails)) {
-                        UsernamePasswordAuthenticationToken authentication =
-                            new UsernamePasswordAuthenticationToken(
-                                userDetails,
-                                null,
-                                userDetails.getAuthorities()
-                            );
+                        UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
+                                userDetails, null, userDetails.getAuthorities()
+                        );
                         accessor.setUser(authentication);
+                        SecurityContextHolder.getContext().setAuthentication(authentication);
                     }
                 }
             }
