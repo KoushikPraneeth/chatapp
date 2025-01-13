@@ -94,7 +94,7 @@ function App() {
 
   const sendMessage = (e) => {
     e.preventDefault();
-    if (stompClient.current && messageInput) {
+    if (stompClient.current && stompClient.current.connected && messageInput) {
       const message = {
         sender: username,
         content: messageInput,
@@ -104,6 +104,8 @@ function App() {
         body: JSON.stringify(message),
       });
       setMessageInput("");
+    } else {
+      setError("Not connected to the chat server. Please try again.");
     }
   };
 
@@ -151,9 +153,13 @@ function App() {
               value={messageInput}
               onChange={(e) => setMessageInput(e.target.value)}
               placeholder="Type a message..."
+              disabled={!connected}
             />
-            <button type="submit">Send</button>
+            <button type="submit" disabled={!connected}>
+              Send
+            </button>
           </form>
+          {!connected && <div className="error">Connecting to chat server...</div>}
         </div>
       )}
     </div>
