@@ -5,17 +5,18 @@ import org.springframework.security.config.annotation.web.messaging.MessageSecur
 import org.springframework.security.config.annotation.web.socket.AbstractSecurityWebSocketMessageBrokerConfigurer;
 
 @Configuration
-public class WebSocketSecurityConfig
-    extends AbstractSecurityWebSocketMessageBrokerConfigurer {
+public class WebSocketSecurityConfig extends AbstractSecurityWebSocketMessageBrokerConfigurer {
 
     @Override
-    protected void configureInbound(
-        MessageSecurityMetadataSourceRegistry messages
-    ) {
+    protected void configureInbound(MessageSecurityMetadataSourceRegistry messages) {
         messages
-            .simpDestMatchers("/app/**")
-            .authenticated()
-            .anyMessage()
-            .authenticated();
+                .simpDestMatchers("/app/**").authenticated() // Secure WebSocket endpoints
+                .anyMessage().authenticated(); // Authenticate all messages
+    }
+
+    @Override
+    protected boolean sameOriginDisabled() {
+        // Disable CSRF for WebSocket connections
+        return true;
     }
 }
